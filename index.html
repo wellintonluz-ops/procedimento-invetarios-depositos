@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POP Interativo: Inventário dos Depósitos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link.active, .nav-link:hover {
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+        }
+        .accordion-item {
+            transition: all 0.5s ease;
+        }
+        .accordion-content {
+            transition: all 0.5s ease;
+        }
+        .accordion-icon {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-900">POP: Procedimento de Inventário dos Depósitos</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#overview" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600 active">Visão Geral</a>
+                        <a href="#depositos" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">Depósitos</a>
+                        <a href="#registro" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">Registro</a>
+                        <a href="#quiz" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-gray-600">Quiz</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <section id="overview" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Visão Geral e Responsabilidades</h2>
+            <p class="text-gray-600 mb-6">Este Procedimento Operacional Padrão (POP) descreve o processo de inventário dos depósitos para garantir a acuracidade do estoque. O <strong>Setor de Auditoria de Estoque</strong> é o principal responsável, podendo solicitar auxílio de outros setores.</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Objetivo</h3>
+                    <p class="text-gray-600">Garantir a precisão do estoque físico e sistêmico, assegurando <strong>“Entrada OK” e “Saída OK”</strong> diariamente.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Variações de Depósitos</h3>
+                    <p class="text-gray-600">Todos os depósitos padrão possuem variações com sufixos:</p>
+                    <ul class="list-disc list-inside text-gray-600">
+                        <li>.AT (Área de transferências)</li>
+                        <li>.DESC (Área para descarte)</li>
+                        <li>.INS (Área para inserção de saldo)</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Divergências</h3>
+                    <p class="text-gray-600">Qualquer divergência encontrada (físico ou sistema) deverá ser movida para a área de auditoria (INV.AT), registrada em ficha própria e comunicada ao líder.</p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="depositos" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Depósitos e Tipos de Contagens</h2>
+            <p class="text-gray-600 mb-8">Clique em cada depósito para ver os detalhes sobre o tipo e recorrência do inventário.</p>
+
+            <div class="space-y-4">
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>BO.AT (Depósito de transferências para expedição)</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li><strong>Recorrência:</strong> Diário (início de cada turno)</li>
+                                <li><strong>Tipo:</strong> Por SKU. Divergência em qualquer quantidade de um SKU, o SKU é considerado com erro.</li>
+                                <li><strong>Exemplo:</strong> 2 SKUs inventariados – 1 SKU com erro = 50% de acuracidade.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>INB.AT (Recebimento de compras), EXP.AT (Expedição), DES.AT (Desmontagens), ENV.AT (Envios)</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li><strong>Recorrência:</strong> Diário (início e fim de cada turno)</li>
+                                <li><strong>Tipo:</strong> Por dia. Divergência em qualquer unidade, o dia é considerado com erro.</li>
+                                <li><strong>Exemplo (INB.AT):</strong> 1 dia inventariado – 1 dia com erro = 0% de acuracidade.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>OP.AT (Montagem de ordens de produção)</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li><strong>Recorrência:</strong> Diário (início e fim de cada turno)</li>
+                                <li><strong>Tipo:</strong> Por lote (ordem de produção). Divergência em qualquer unidade de uma ordem, a ordem inteira é considerada com erro.</li>
+                                <li><strong>Exemplo:</strong> 2 ordens inventariadas – 1 ordem com erro = 50% de acuracidade.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>Porta Pallet (Armazenamento Principal)</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li><strong>Recorrência:</strong> Diário (mínimo 2 por dia)</li>
+                                <li><strong>Tipo:</strong> Por posição. Divergência em qualquer unidade, a posição inteira é considerada com erro.</li>
+                                <li><strong>Exemplo:</strong> 2 posições inventariadas – 1 posição com erro = 50% de acuracidade.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>REC.AT (Recebimento de devoluções) e SEG.AT (Falta de componentes)</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li><strong>Recorrência:</strong> Diário (início e fim de cada turno)</li>
+                                <li><strong>Tipo:</strong> Por unidade. Divergência em qualquer unidade, é considerado erro.</li>
+                                <li><strong>Exemplo (REC.AT):</strong> Sistema total 400 unidades – Físico 350 unidades. Acuracidade = 87,5%.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item bg-white rounded-lg shadow-sm">
+                    <button class="accordion-header w-full text-left p-4 font-semibold flex justify-between items-center">
+                        <span>Depósitos que Não Necessitam de Inventário</span>
+                        <span class="accordion-icon transform transition-transform">▶</span>
+                    </button>
+                    <div class="accordion-content max-h-0 overflow-hidden transition-all duration-500 ease-in-out">
+                        <div class="p-4 border-t border-gray-200">
+                            <ul class="list-disc list-inside text-gray-600">
+                                <li>IMO.AT (Ativos imobilizados)</li>
+                                <li>MAN.AT (Manutenção de produtos)</li>
+                                <li>INV.AT (Materiais em auditoria)</li>
+                                <li>PROD.AT (Área de espera para ordens de produção)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="registro" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Registro dos Inventários</h2>
+            <p class="text-gray-600 mb-6">Todos os inventários (início e fim de turno) devem ser registrados em planilha de controle. A planilha deve conter as seguintes informações:</p>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <ul class="list-disc list-inside text-gray-600 space-y-2">
+                    <li>Data e horário da contagem</li>
+                    <li>Nome do responsável</li>
+                    <li>Saldo físico x saldo sistêmico</li>
+                    <li>Observações em caso de divergência</li>
+                </ul>
+            </div>
+        </section>
+
+        <hr class="my-12 border-gray-200">
+
+        <section id="audio-quiz" class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Áudio e Quiz de Conhecimentos</h2>
+
+            <!-- Audio Player Section -->
+            <div class="mb-8 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-xl font-semibold mb-3 text-gray-700">Ouvir o Procedimento</h3>
+                <audio controls class="w-full rounded-md shadow">
+                    <source src="pop-inventarios-depositos.mp3" type="audio/mpeg">
+                    Seu navegador não suporta o elemento de áudio.
+                </audio>
+            </div>
+
+            <!-- Quiz Section -->
+            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                <h3 class="text-xl font-semibold mb-4 text-gray-700">Teste seu Conhecimento sobre o POP de Inventário</h3>
+                <div id="quiz-container" class="space-y-4 hidden">
+                    <div class="bg-blue-500 text-white p-3 rounded-md text-lg font-medium mb-4" id="question-text"></div>
+                    <div id="options-container" class="space-y-3"></div>
+                    <div id="feedback" class="text-center font-medium mt-4"></div>
+                    <button id="next-button" class="mt-4 w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-md font-bold transition-colors hover:bg-gray-400">Próxima Pergunta</button>
+                </div>
+                <div id="start-screen" class="text-center">
+                    <p class="text-gray-600 mb-4">Clique no botão para iniciar o quiz.</p>
+                    <button id="start-button" class="bg-blue-500 text-white py-2 px-6 rounded-md font-bold text-lg shadow-md transition-transform transform hover:scale-105">Iniciar Quiz</button>
+                </div>
+                <div id="result-screen" class="text-center hidden">
+                    <p class="text-2xl font-bold text-gray-800 mb-3">Quiz Concluído!</p>
+                    <p class="text-xl text-gray-600 mb-4">Sua pontuação: <span id="score-text" class="font-bold text-blue-600"></span></p>
+                    <button id="restart-button" class="bg-green-500 text-white py-2 px-6 rounded-md font-bold text-lg shadow-md transition-transform transform hover:scale-105">Refazer o Quiz</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-12">
+        <div class="container mx-auto px-8 py-4 text-center text-gray-500">
+            <p>&copy; 2025 Guia de Procedimentos Internos. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.4
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        navLinks.forEach(link => {
+                            link.classList.remove('active');
+                            if (link.getAttribute('href').substring(1) === entry.target.id) {
+                                link.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            }, observerOptions);
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector(link.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = item.querySelector('.accordion-icon');
+
+                header.addEventListener('click', () => {
+                    const isOpen = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    
+                    document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = '0px');
+                    document.querySelectorAll('.accordion-icon').forEach(i => i.style.transform = 'rotate(0deg)');
+
+                    if (!isOpen) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.style.transform = 'rotate(90deg)';
+                    }
+                });
+            });
+
+            const questions = [
+                {
+                    question: "Qual a recorrência de inventário para o depósito REC.AT?",
+                    options: ["Semanalmente", "Diariamente (início e fim de cada turno)", "Mensalmente", "Apenas quando solicitado"],
+                    answer: "Diariamente (início e fim de cada turno)"
+                },
+                {
+                    question: "Qual o critério de acuracidade para o inventário do depósito BO.AT?",
+                    options: ["Por unidade", "Por dia", "Por SKU", "Por lote"],
+                    answer: "Por SKU"
+                },
+                {
+                    question: "Em caso de divergência em qualquer unidade, o inventário do depósito INB.AT é considerado com erro por qual critério?",
+                    options: ["Por unidade", "Por dia", "Por SKU", "Por posição"],
+                    answer: "Por dia"
+                },
+                {
+                    question: "Para onde as divergências encontradas devem ser movidas, segundo o POP?",
+                    options: ["Diretamente para a expedição", "Para a área de auditoria (INV.AT)", "Para a área de descarte (DESC)", "Para o depósito de manutenção (MAN.AT)"],
+                    answer: "Para a área de auditoria (INV.AT)"
+                },
+                {
+                    question: "Qual o tipo de inventário utilizado para o depósito OP.AT?",
+                    options: ["Por lote (ordem de produção)", "Por unidade", "Por dia", "Por posição"],
+                    answer: "Por lote (ordem de produção)"
+                },
+                {
+                    question: "Quantos 'porta pallet' devem ser inventariados diariamente?",
+                    options: ["Um mínimo de 10", "Um mínimo de 2", "Todos os porta pallet", "Apenas os que tiverem divergência"],
+                    answer: "Um mínimo de 2"
+                },
+                {
+                    question: "Qual variação de depósito é utilizada para solicitações de inserção de saldo?",
+                    options: [".AT", ".DESC", ".INS", ".INV"],
+                    answer: ".INS"
+                },
+                {
+                    question: "Em caso de divergência no inventário de um 'Porta pallet', o que é considerado com erro?",
+                    options: ["Apenas a unidade em divergência", "O SKU como um todo", "A posição inteira", "Apenas o produto que gerou a divergência"],
+                    answer: "A posição inteira"
+                }
+            ];
+
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let answeredThisQuestion = false;
+
+            const startButton = document.getElementById('start-button');
+            const nextButton = document.getElementById('next-button');
+            const restartButton = document.getElementById('restart-button');
+
+            const startScreen = document.getElementById('start-screen');
+            const quizContainer = document.getElementById('quiz-container');
+            const resultScreen = document.getElementById('result-screen');
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const scoreText = document.getElementById('score-text');
+            const feedbackText = document.getElementById('feedback');
+
+            if (startButton) startButton.addEventListener('click', startQuiz);
+            if (nextButton) nextButton.addEventListener('click', () => {
+                if (answeredThisQuestion) {
+                    currentQuestionIndex++;
+                    if (currentQuestionIndex < questions.length) {
+                        showQuestion();
+                    } else {
+                        showResult();
+                    }
+                }
+            });
+            if (restartButton) restartButton.addEventListener('click', restartQuiz);
+
+            function startQuiz() {
+                startScreen.classList.add('hidden');
+                resultScreen.classList.add('hidden');
+                quizContainer.classList.remove('hidden');
+                currentQuestionIndex = 0;
+                score = 0;
+                showQuestion();
+            }
+
+            function showQuestion() {
+                answeredThisQuestion = false;
+                nextButton.classList.add('hidden');
+                feedbackText.textContent = '';
+                
+                const currentQuestion = questions[currentQuestionIndex];
+                questionText.textContent = `Pergunta ${currentQuestionIndex + 1}: ${currentQuestion.question}`;
+                
+                optionsContainer.innerHTML = '';
+                currentQuestion.options.forEach(option => {
+                    const button = document.createElement('button');
+                    button.textContent = option;
+                    button.classList.add('w-full', 'bg-white', 'text-gray-800', 'py-3', 'px-4', 'rounded-md', 'border', 'border-gray-300', 'text-left', 'transition-colors', 'hover:bg-gray-200');
+                    button.addEventListener('click', () => selectAnswer(button, option));
+                    optionsContainer.appendChild(button);
+                });
+            }
+
+            function selectAnswer(button, selectedOption) {
+                if (answeredThisQuestion) return;
+                answeredThisQuestion = true;
+                
+                const currentQuestion = questions[currentQuestionIndex];
+                
+                if (selectedOption === currentQuestion.answer) {
+                    score++;
+                    button.classList.remove('bg-white', 'hover:bg-gray-200');
+                    button.classList.add('bg-green-500', 'text-white', 'pointer-events-none');
+                    feedbackText.textContent = "Correto!";
+                    feedbackText.classList.remove('text-red-500');
+                    feedbackText.classList.add('text-green-500');
+                } else {
+                    button.classList.remove('bg-white', 'hover:bg-gray-200');
+                    button.classList.add('bg-red-500', 'text-white', 'pointer-events-none');
+                    feedbackText.textContent = `Incorreto. A resposta correta era: "${currentQuestion.answer}"`;
+                    feedbackText.classList.remove('text-green-500');
+                    feedbackText.classList.add('text-red-500');
+
+                    const optionButtons = optionsContainer.querySelectorAll('button');
+                    optionButtons.forEach(btn => {
+                        if (btn.textContent === currentQuestion.answer) {
+                            btn.classList.add('bg-green-500', 'text-white');
+                        }
+                        btn.classList.add('pointer-events-none');
+                    });
+                }
+                nextButton.classList.remove('hidden');
+            }
+
+            function showResult() {
+                quizContainer.classList.add('hidden');
+                resultScreen.classList.remove('hidden');
+                scoreText.textContent = `${score} de ${questions.length}`;
+            }
+
+            function restartQuiz() {
+                currentQuestionIndex = 0;
+                score = 0;
+                startScreen.classList.remove('hidden');
+                quizContainer.classList.add('hidden');
+                resultScreen.classList.add('hidden');
+                startQuiz();
+            }
+        });
+    </script>
+
+</body>
+</html>
