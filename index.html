@@ -139,6 +139,67 @@
         }
       }, [motivos, selectedMotivo]);
 
+      // Carregar registros do Firestore ao iniciar a página
+      useEffect(() => {
+        let isMounted = true;
+        let retryCount = 0;
+        const maxRetries = 5;
+
+        const loadRecordsFromFirestore = async () => {
+          try {
+            initializeFirebase();
+            
+            // Aguardar até 3 segundos para Firebase estar pronto
+            let currentDb = db;
+            let waitCount = 0;
+            while (!currentDb && waitCount < 30) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              currentDb = db;
+              waitCount++;
+            }
+            
+            if (!currentDb) {
+              console.warn('Firebase não inicializou a tempo');
+              return;
+            }
+            
+            const querySnapshot = await currentDb.collection('records').get();
+            const loadedRecords = [];
+            
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              if (data && data.id) {
+                loadedRecords.push(data);
+              }
+            });
+            
+            if (isMounted && loadedRecords.length > 0) {
+              // Ordenar por data (mais recentes primeiro)
+              loadedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+              setRecords(loadedRecords);
+              console.log(`✅ Carregados ${loadedRecords.length} registros do Firestore`);
+            }
+          } catch (error) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              console.warn(`Erro ao carregar (tentativa ${retryCount}/${maxRetries}):`, error.message);
+              // Tentar novamente após 1 segundo
+              setTimeout(loadRecordsFromFirestore, 1000);
+            } else {
+              console.warn('Falha ao carregar registros após múltiplas tentativas');
+            }
+          }
+        };
+        
+        // Iniciar carregamento após 500ms
+        const loadTimer = setTimeout(loadRecordsFromFirestore, 500);
+        
+        return () => {
+          isMounted = false;
+          clearTimeout(loadTimer);
+        };
+      }, []);
+
       const formatTime = (dateStr) => {
         if (!dateStr) return '--:--';
         return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -172,7 +233,42 @@
           setIsLoggedIn(true);
           setShowLoginModal(false);
           setPasswordInput(''); 
-          setLoginInput(''); 
+          setLoginInput('');
+          
+          // Carregar registros do Firestore imediatamente ao fazer login
+          const loadAfterLogin = async () => {
+            try {
+              initializeFirebase();
+              let currentDb = db;
+              let waitCount = 0;
+              while (!currentDb && waitCount < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                currentDb = db;
+                waitCount++;
+              }
+              
+              if (currentDb) {
+                const querySnapshot = await currentDb.collection('records').get();
+                const loadedRecords = [];
+                querySnapshot.forEach((doc) => {
+                  const data = doc.data();
+                  if (data && data.id) {
+                    loadedRecords.push(data);
+                  }
+                });
+                
+                if (loadedRecords.length > 0) {
+                  loadedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+                  setRecords(loadedRecords);
+                  console.log(`✅ Carregados ${loadedRecords.length} registros após login`);
+                }
+              }
+            } catch (error) {
+              console.warn('Erro ao carregar registros após login:', error.message);
+            }
+          };
+          
+          setTimeout(loadAfterLogin, 300);
         } else {
           setLoginError('Utilizador ou palavra-passe incorretos.');
         }
@@ -406,6 +502,61 @@
         }, 2000);
         return () => clearTimeout(saveTimer);
       }, [records]);
+
+      // Sincronizar registros em tempo real com Firestore (listener) - Sempre ativo, com ou sem login
+      useEffect(() => {
+        let unsubscribe;
+        
+        const setupRealtimeSync = async () => {
+          try {
+            initializeFirebase();
+            let currentDb = db;
+            let waitCount = 0;
+            while (!currentDb && waitCount < 20) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              currentDb = db;
+              waitCount++;
+            }
+            
+            if (currentDb) {
+              // Listener para mudanças em tempo real na coleção 'records'
+              // Ativo SEMPRE, independente de login (registros são públicos)
+              unsubscribe = currentDb.collection('records').onSnapshot(
+                (querySnapshot) => {
+                  const loadedRecords = [];
+                  querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (data && data.id) {
+                      loadedRecords.push(data);
+                    }
+                  });
+                  
+                  if (loadedRecords.length > 0) {
+                    // Ordenar por data (mais recentes primeiro)
+                    loadedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    setRecords(loadedRecords);
+                    console.log(`🔄 Sincronizados ${loadedRecords.length} registros em tempo real`);
+                  }
+                },
+                (error) => {
+                  console.warn('Erro no listener de sincronização:', error.message);
+                }
+              );
+            }
+          } catch (error) {
+            console.warn('Erro ao configurar sincronização em tempo real:', error.message);
+          }
+        };
+        
+        // Configurar sincronização assim que o App monta (independente de login)
+        setupRealtimeSync();
+        
+        return () => {
+          if (unsubscribe) {
+            unsubscribe();
+          }
+        };
+      }, []);
 
       return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-800 relative">
