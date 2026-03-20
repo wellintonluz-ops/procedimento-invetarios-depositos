@@ -159,10 +159,11 @@
             }
             
             if (!currentDb) {
-              console.warn('Firebase não inicializou a tempo');
+              console.error('Firebase não inicializou a tempo (db null)');
               return;
             }
-            
+
+            console.log('Firebase inicializado com sucesso, carregando records');
             const querySnapshot = await currentDb.collection('records').get();
             const loadedRecords = [];
             
@@ -428,6 +429,46 @@
         setTaskQuantity('');
       };
 
+      const handleDeleteRecord = (recordId) => {
+        if (!isLoggedIn) {
+          alert('Apenas usuários com login podem excluir registros.');
+          return;
+        }
+
+        const confirmed = window.confirm('Tem certeza que deseja excluir este registro?');
+        if (!confirmed) return;
+
+        setRecords(prevRecords => {
+          const updated = prevRecords.filter(r => r.id !== recordId);
+          try {
+            localStorage.setItem('local_records', JSON.stringify(updated));
+          } catch (e) {
+            console.warn('Erro ao atualizar localStorage após exclusão:', e.message);
+          }
+          return updated;
+        });
+
+        if (db) {
+          db.collection('records').doc(String(recordId)).delete()
+            .then(() => console.log(`Registro ${recordId} excluído no Firestore`))
+            .catch(err => console.error('Erro ao excluir registro no Firestore:', recordId, err));
+
+          // Atualiza índice também, se possível
+          try {
+            const fieldValue = (window.firebase && window.firebase.firestore && window.firebase.firestore.FieldValue) ? window.firebase.firestore.FieldValue : null;
+            if (fieldValue && db.collection('meta')) {
+              db.collection('meta').doc('recordsIndex').update({
+                ids: fieldValue.arrayRemove(recordId),
+                totalRecords: Math.max(0, records.length - 1),
+                lastUpdated: new Date().toISOString()
+              }).catch(err => console.warn('Erro ao atualizar índice após exclusão:', err));
+            }
+          } catch (err) {
+            console.warn('Atualização de índice não suportada (Firestore FieldValue):', err.message);
+          }
+        }
+      };
+
       const handleExportPausas = () => {
         if (!pausasDetalhadas.length) return;
         const header = ['Data', 'Funcionário', 'Tarefa', 'Motivo', 'Início', 'Fim', 'Duração'];
@@ -498,13 +539,16 @@
       useEffect(() => {
         initializeFirebase();
         const saveTimer = setTimeout(() => {
+          console.log('Tentando salvar records no Firestore', {dbExists: !!db, recordCount: records.length});
           if (db && records.length > 0) {
             // Salvar cada record individualmente para evitar sobrescrita entre usuários
             records.forEach((record) => {
               db.collection('records').doc(String(record.id)).set({
                 ...record,
                 updatedAt: new Date().toISOString()
-              }).catch((error) => console.warn('Erro ao salvar registro:', error.message));
+              }).then(() => {
+                console.log(`Registro ${record.id} salvo no Firestore`);
+              }).catch((error) => console.error('Erro ao salvar registro:', record.id, error));
             });
             
             // Salvar também um índice com todos os IDs para referência rápida
@@ -545,6 +589,7 @@
               // Ativo SEMPRE, independente de login (registros são públicos)
               unsubscribe = currentDb.collection('records').onSnapshot(
                 (querySnapshot) => {
+                  console.log('Listener onSnapshot disparado, docs:', querySnapshot.size);
                   const loadedRecords = [];
                   querySnapshot.forEach((doc) => {
                     const data = doc.data();
@@ -1171,6 +1216,7 @@
                           <th className="px-6 py-3">Fim</th>
                           <th className="px-6 py-3">Tempo Líquido</th>
                           <th className="px-6 py-3">Qtd/h</th>
+                          <th className="px-6 py-3">Ações</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -1197,6 +1243,18 @@
                               <td className="px-6 py-3">{formatTime(record.endTime)}</td>
                               <td className="px-6 py-3 font-medium text-emerald-600">{calculateDurationStr(record.produtivoMs)}</td>
                               <td className="px-6 py-3 font-medium text-slate-700">{record.quantidadePorHora != null ? record.quantidadePorHora.toFixed(2) : '--'}</td>
+                              <td className="px-6 py-3">
+                                {isLoggedIn ? (
+                                  <button
+                                    onClick={() => handleDeleteRecord(record.id)}
+                                    className="text-sm text-red-600 hover:text-red-800 font-semibold"
+                                  >
+                                    Excluir
+                                  </button>
+                                ) : (
+                                  <span className="text-slate-400 text-xs">Login necessário</span>
+                                )}
+                              </td>
                             </tr>
                           ))
                         )}
