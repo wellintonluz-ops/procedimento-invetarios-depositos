@@ -100,6 +100,17 @@
       const [records, setRecords] = useState([]);
       const [activeTask, setActiveTask] = useState(null);
       
+      // Ref para rastrear sincronização e evitar loops infinitos
+      const lastSyncedRecordsRef = React.useRef([]);
+      const isSyncingRef = React.useRef(false);
+      
+      // Função para comparar registros (evita updates desnecessários)
+      const recordsChanged = (newRecords) => {
+        if (newRecords.length !== lastSyncedRecordsRef.current.length) return true;
+        return JSON.stringify(newRecords.map(r => r.id).sort()) !== 
+               JSON.stringify(lastSyncedRecordsRef.current.map(r => r.id).sort());
+      };
+      
       // Estado de autenticação e navegação
       const [isLoggedIn, setIsLoggedIn] = useState(false);
       const [showLoginModal, setShowLoginModal] = useState(false);
@@ -535,12 +546,22 @@
         }));
       });
       
-      // Salvar no Firestore quando records mudar (com debounce)
+      // Salvar no Firestore quando records mudar (com debounce e proteção contra loops)
       useEffect(() => {
         initializeFirebase();
+        
+        // Não salvar se estamos sincronizando dados do Firebase
+        if (isSyncingRef.current) {
+          console.log('⏸ Pulando save - sincronização em andamento');
+          return;
+        }
+        
         const saveTimer = setTimeout(() => {
           console.log('Tentando salvar records no Firestore', {dbExists: !!db, recordCount: records.length});
           if (db && records.length > 0) {
+            // Marca como sincronizando para evitar loop
+            isSyncingRef.current = true;
+            
             // Salvar cada record individualmente para evitar sobrescrita entre usuários
             records.forEach((record) => {
               db.collection('records').doc(String(record.id)).set({
@@ -557,6 +578,11 @@
               lastUpdated: new Date().toISOString(),
               totalRecords: records.length
             }).catch((error) => console.warn('Erro ao atualizar índice:', error.message));
+            
+            // Aguard 1 segundo antes de permitir sincronização novamente
+            setTimeout(() => {
+              isSyncingRef.current = false;
+            }, 1000);
           }
 
           // Salvar também localmente para fallback offline / browser refresh
@@ -601,8 +627,21 @@
                   if (loadedRecords.length > 0) {
                     // Ordenar por data (mais recentes primeiro)
                     loadedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    setRecords(loadedRecords);
-                    console.log(`🔄 Sincronizados ${loadedRecords.length} registros em tempo real`);
+                    
+                    // Verificar se realmente houve mudanças antes de atualizar
+                    if (recordsChanged(loadedRecords)) {
+                      console.log(`🔄 Sincronizados ${loadedRecords.length} registros em tempo real (NOVOS DADOS)`);
+                      isSyncingRef.current = true;
+                      lastSyncedRecordsRef.current = loadedRecords;
+                      setRecords(loadedRecords);
+                      
+                      // Permitir save novamente após a sincronização
+                      setTimeout(() => {
+                        isSyncingRef.current = false;
+                      }, 500);
+                    } else {
+                      console.log(`ℹ️ Listener disparado, mas sem changes (mesmos dados)`);
+                    }
                   }
                 },
                 (error) => {
