@@ -717,6 +717,12 @@
                     >
                       <PieChart size={16} /> Relatórios
                     </button>
+                    <button
+                      onClick={() => setActiveTab('dashboard2')}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'dashboard2' ? 'bg-white shadow-sm text-indigo-700' : 'text-slate-600 hover:text-indigo-600'}`}
+                    >
+                      <BarChart2 size={16} /> Dashboard 2
+                    </button>
                   </div>
                 )}
               </div>
@@ -1054,29 +1060,52 @@
             {/* --- CONTEÚDO DA ABA: DASHBOARD / PRINCIPAL --- */}
             {activeTab === 'dashboard' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                {/* Dashboard Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-orange-50 text-orange-600 rounded-lg"><Coffee size={24} /></div>
+                {/* Dashboard Grid com Cards Melhorados */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Eficiência com Status Automático */}
+                  <div className={`p-5 rounded-xl text-white shadow-sm flex flex-col justify-between ${eficiencia >= 80 ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' : eficiencia >= 60 ? 'bg-gradient-to-br from-orange-400 to-orange-500' : 'bg-gradient-to-br from-red-500 to-red-600'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-white/90 font-medium text-sm">Índice de Eficiência</p>
+                      {eficiencia >= 80 ? <Award size={20} className="text-white/80" /> : <AlertCircle size={20} className="text-white/80" />}
+                    </div>
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">Tempo em Pausa</p>
-                      <p className="text-2xl font-bold text-slate-800">{calculateDurationStr(totalPauseMs)}</p>
+                      <p className="text-4xl font-bold">{eficiencia}%</p>
+                      <p className="text-xs text-white/80 mt-1 font-medium bg-white/20 inline-block px-2 py-0.5 rounded-full">
+                        {eficiencia >= 80 ? 'Alta Performance' : eficiencia >= 60 ? 'Desempenho Regular' : 'Atenção Necessária'}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-green-50 text-green-600 rounded-lg"><CheckSquare size={24} /></div>
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-slate-500 font-medium text-sm">Tempo Líquido (Focado)</p>
+                      <Target size={20} className="text-indigo-500" />
+                    </div>
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">Tempo Produtivo</p>
                       <p className="text-2xl font-bold text-slate-800">{calculateDurationStr(totalProdutivoMs)}</p>
+                      <p className="text-xs text-slate-400 mt-1">Horas reais de trabalho</p>
                     </div>
                   </div>
 
-                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex items-center gap-4">
-                    <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg"><BarChart2 size={24} /></div>
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-slate-500 font-medium text-sm">Tempo de Ociosidade</p>
+                      <Coffee size={20} className="text-orange-500" />
+                    </div>
                     <div>
-                      <p className="text-sm text-slate-500 font-medium">Eficiência</p>
-                      <p className="text-2xl font-bold text-slate-800">{eficiencia}%</p>
+                      <p className="text-2xl font-bold text-slate-800">{calculateDurationStr(totalPauseMs)}</p>
+                      <p className="text-xs text-slate-400 mt-1">Pausas e interrupções</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-slate-500 font-medium text-sm">Entregas Concluídas</p>
+                      <CheckSquare size={20} className="text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-800">{records.length}</p>
+                      <p className="text-xs text-slate-400 mt-1">Volume de tarefas executadas</p>
                     </div>
                   </div>
                 </div>
@@ -1260,6 +1289,222 @@
                         )}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- CONTEÚDO DA ABA: DASHBOARD 2 --- */}
+            {activeTab === 'dashboard2' && (
+              <div className="space-y-6 animate-in fade-in duration-300">
+                
+                {/* Header Executivo do Dashboard 2 */}
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                      <BarChart2 className="text-indigo-600" />
+                      Dashboard Analítico
+                    </h2>
+                    <p className="text-slate-500 mt-1 text-sm">
+                      Visão detalhada e métricas avançadas de produtividade
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-slate-500">Última atualização</p>
+                    <p className="font-semibold text-slate-800">{new Date().toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+
+                {/* KPIs Avançados */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="flex justify-between items-start mb-4">
+                      <p className="text-slate-500 font-medium text-sm">Média por Tarefa</p>
+                      <Activity size={20} className="text-purple-500" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {records.length > 0 ? calculateDurationStr(totalProdutivoMs / records.length) : '00:00:00'}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Tempo médio por execução</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="text-slate-500 font-medium text-sm mb-4">Taxa de Pausa</div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {totalWorkedMs > 0 ? Math.round((totalPauseMs / totalWorkedMs) * 100) : 0}%
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Do tempo total trabalhado</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="text-slate-500 font-medium text-sm mb-4">Produtividade Diária</div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {records.length > 0 ? Math.round(records.length / Math.max(1, new Set(records.map(r => formatDate(r.date))).size)) : 0}
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Tarefas por dia útil</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div className="text-slate-500 font-medium text-sm mb-4">Melhor Desempenho</div>
+                    <div>
+                      <p className="text-2xl font-bold text-slate-800">
+                        {statsPorTarefa.length > 0 ? Math.max(...statsPorTarefa.map(s => s.eficiencia)) : 0}%
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1">Eficiência máxima alcançada</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Gráfico de Distribuição por Tarefa */}
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-bold mb-6 text-slate-800 flex items-center gap-2">
+                      <BarChart2 className="text-indigo-600" size={20} />
+                      Distribuição de Tempo por Atividade
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {statsPorTarefa.filter(s => s.produtivoMs > 0).map(stat => (
+                        <div key={stat.nome} className="flex items-center gap-4">
+                          <div className="w-1/3 text-sm font-medium text-slate-700 truncate" title={stat.nome}>
+                            {stat.nome}
+                          </div>
+                          <div className="w-2/3 flex items-center gap-3">
+                            <div className="flex-1 h-4 bg-slate-100 rounded-md overflow-hidden flex relative">
+                              <div 
+                                className="h-full bg-indigo-500 rounded-md transition-all duration-1000 ease-out" 
+                                style={{ 
+                                  width: `${(stat.produtivoMs / maxProdutivoMs) * 100}%`,
+                                  minWidth: stat.produtivoMs > 0 ? '4px' : '0'
+                                }}
+                              ></div>
+                            </div>
+                            <div className="w-20 text-right">
+                              <span className="text-sm font-bold text-slate-700">
+                                {calculateDurationStr(stat.produtivoMs)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {statsPorTarefa.filter(s => s.produtivoMs > 0).length === 0 && (
+                        <p className="text-slate-400 text-sm text-center py-8">Nenhuma atividade registada ainda.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Top Tarefas e Estatísticas */}
+                  <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-bold mb-6 text-slate-800 flex items-center gap-2">
+                      <Award className="text-indigo-600" size={20} />
+                      Ranking de Desempenho
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {statsPorTarefa.filter(s => s.count > 0).sort((a, b) => b.eficiencia - a.eficiencia).slice(0, 5).map((stat, idx) => (
+                        <div key={stat.nome} className="flex items-center gap-4 p-3 bg-slate-50 rounded-lg">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            idx === 0 ? 'bg-yellow-100 text-yellow-700' : 
+                            idx === 1 ? 'bg-slate-100 text-slate-700' : 
+                            idx === 2 ? 'bg-orange-100 text-orange-700' : 
+                            'bg-slate-100 text-slate-600'
+                          }`}>
+                            {idx + 1}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-slate-800 text-sm">{stat.nome}</p>
+                            <p className="text-xs text-slate-500">{stat.count} execuções</p>
+                          </div>
+                          <div className="text-right">
+                            <p className={`text-sm font-bold ${
+                              stat.eficiencia >= 80 ? 'text-emerald-600' : 
+                              stat.eficiencia >= 60 ? 'text-indigo-600' : 
+                              'text-orange-500'
+                            }`}>
+                              {stat.eficiencia}%
+                            </p>
+                            <p className="text-xs text-slate-400">{calculateDurationStr(stat.produtivoMs)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      {statsPorTarefa.filter(s => s.count > 0).length === 0 && (
+                        <p className="text-slate-400 text-sm text-center py-8">Nenhuma atividade para classificar.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Timeline dos Últimos Registros */}
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                  <h3 className="text-lg font-bold mb-6 text-slate-800 flex items-center gap-2">
+                    <Clock className="text-indigo-600" size={20} />
+                    Timeline de Atividades Recentes
+                  </h3>
+                  
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {records.slice(0, 10).map((rec, idx) => (
+                      <div key={rec.id} className="flex items-start gap-4 p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                        <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-sm">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold text-slate-800 truncate">{rec.task}</h4>
+                            <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
+                              {formatDate(rec.date)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-slate-600 mb-2">
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                              {rec.worker}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              {calculateDurationStr(rec.produtivoMs)} produtivo
+                            </span>
+                            {rec.pauseMs > 0 && (
+                              <span className="flex items-center gap-1">
+                                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                {calculateDurationStr(rec.pauseMs)} pausa
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-500">
+                              {formatTime(rec.startTime)} - {formatTime(rec.endTime)}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              {rec.quantity > 0 && (
+                                <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full">
+                                  {rec.quantity} unidades
+                                </span>
+                              )}
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                                rec.quantidadePorHora >= 10 ? 'bg-emerald-50 text-emerald-700' :
+                                rec.quantidadePorHora >= 5 ? 'bg-blue-50 text-blue-700' :
+                                'bg-slate-50 text-slate-600'
+                              }`}>
+                                {rec.quantidadePorHora ? rec.quantidadePorHora.toFixed(1) : '--'} qtd/h
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {records.length === 0 && (
+                      <div className="text-center py-12">
+                        <Clock size={48} className="text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-400 text-sm">Nenhuma atividade registada ainda.</p>
+                        <p className="text-slate-400 text-xs mt-1">As atividades aparecerão aqui quando forem concluídas.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
