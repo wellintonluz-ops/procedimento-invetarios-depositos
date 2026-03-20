@@ -178,6 +178,21 @@
               loadedRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
               setRecords(loadedRecords);
               console.log(`✅ Carregados ${loadedRecords.length} registros do Firestore`);
+            } else if (isMounted) {
+              // fallback localStorage
+              try {
+                const local = localStorage.getItem('local_records');
+                if (local) {
+                  const parsed = JSON.parse(local);
+                  if (Array.isArray(parsed) && parsed.length > 0) {
+                    parsed.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    setRecords(parsed);
+                    console.log(`✅ Carregados ${parsed.length} registros do localStorage (fallback)`);
+                  }
+                }
+              } catch (e) {
+                console.warn('Erro ao ler localStorage de fallback:', e.message);
+              }
             }
           } catch (error) {
             retryCount++;
@@ -408,7 +423,7 @@
           status: 'Concluído'
         };
 
-        setRecords([completedTask, ...records]);
+        setRecords(prevRecords => [completedTask, ...prevRecords]);
         setActiveTask(null);
         setTaskQuantity('');
       };
@@ -498,6 +513,13 @@
               lastUpdated: new Date().toISOString(),
               totalRecords: records.length
             }).catch((error) => console.warn('Erro ao atualizar índice:', error.message));
+          }
+
+          // Salvar também localmente para fallback offline / browser refresh
+          try {
+            localStorage.setItem('local_records', JSON.stringify(records));
+          } catch (e) {
+            console.warn('Erro ao salvar localmente:', e.message);
           }
         }, 2000);
         return () => clearTimeout(saveTimer);
