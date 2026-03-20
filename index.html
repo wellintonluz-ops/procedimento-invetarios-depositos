@@ -162,6 +162,15 @@
         }
       }, [motivos, selectedMotivo]);
 
+      // Refs para evitar loops nos listeners
+      const tasksRef = React.useRef(tasks);
+      const motivosRef = React.useRef(motivos);
+      const employeesRef = React.useRef(employees);
+
+      useEffect(() => { tasksRef.current = tasks; }, [tasks]);
+      useEffect(() => { motivosRef.current = motivos; }, [motivos]);
+      useEffect(() => { employeesRef.current = employees; }, [employees]);
+
       // Carregar registros do Firestore ao iniciar a página
       useEffect(() => {
         let isMounted = true;
@@ -247,9 +256,12 @@
             }
 
             try {
+              console.log('Tentando carregar employees do Firestore');
               const employeesDoc = await currentDb.collection('config').doc('employees').get();
+              console.log('employeesDoc.exists:', employeesDoc.exists);
               if (employeesDoc.exists && isMounted) {
                 const data = employeesDoc.data();
+                console.log('data employees:', data);
                 if (data && data.list) {
                   setEmployees(data.list);
                   console.log('✅ Carregados employees do Firestore');
@@ -666,33 +678,52 @@
       // Salvar tasks no Firestore
       useEffect(() => {
         initializeFirebase();
+        console.log('Salvando tasks, db:', db, 'firebaseInit:', firebaseInit);
         if (db) {
+          console.log('Enviando set para tasks:', tasks);
           db.collection('config').doc('tasks').set({
             list: tasks,
             updatedAt: new Date().toISOString()
+          }).then(() => {
+            console.log('Tasks salvas com sucesso');
           }).catch((error) => console.warn('Erro ao salvar tasks:', error));
+        } else {
+          console.warn('db não definido para salvar tasks');
         }
       }, [tasks]);
 
       // Salvar motivos no Firestore
       useEffect(() => {
         initializeFirebase();
+        console.log('Salvando motivos, db:', db, 'firebaseInit:', firebaseInit);
         if (db) {
+          console.log('Enviando set para motivos:', motivos);
           db.collection('config').doc('motivos').set({
             list: motivos,
             updatedAt: new Date().toISOString()
+          }).then(() => {
+            console.log('Motivos salvos com sucesso');
           }).catch((error) => console.warn('Erro ao salvar motivos:', error));
+        } else {
+          console.warn('db não definido para salvar motivos');
         }
       }, [motivos]);
 
       // Salvar employees no Firestore
       useEffect(() => {
+        console.log('useEffect employees triggered, employees:', employees);
         initializeFirebase();
+        console.log('Salvando employees, db:', db, 'firebaseInit:', firebaseInit);
         if (db) {
+          console.log('Enviando set para employees:', employees);
           db.collection('config').doc('employees').set({
             list: employees,
             updatedAt: new Date().toISOString()
+          }).then(() => {
+            console.log('Employees salvos com sucesso');
           }).catch((error) => console.warn('Erro ao salvar employees:', error));
+        } else {
+          console.warn('db não definido para salvar employees');
         }
       }, [employees]);
 
@@ -751,11 +782,11 @@
                 }
               );
 
-              // Listeners para config em tempo real
+              // Listeners para config em tempo real com verificação para evitar loops
               tasksUnsub = currentDb.collection('config').doc('tasks').onSnapshot((doc) => {
                 if (doc.exists) {
                   const data = doc.data();
-                  if (data && data.list) {
+                  if (data && data.list && JSON.stringify(data.list) !== JSON.stringify(tasksRef.current)) {
                     setTasks(data.list);
                     console.log('Tasks atualizadas em tempo real');
                   }
@@ -765,7 +796,7 @@
               motivosUnsub = currentDb.collection('config').doc('motivos').onSnapshot((doc) => {
                 if (doc.exists) {
                   const data = doc.data();
-                  if (data && data.list) {
+                  if (data && data.list && JSON.stringify(data.list) !== JSON.stringify(motivosRef.current)) {
                     setMotivos(data.list);
                     console.log('Motivos atualizados em tempo real');
                   }
@@ -775,7 +806,7 @@
               employeesUnsub = currentDb.collection('config').doc('employees').onSnapshot((doc) => {
                 if (doc.exists) {
                   const data = doc.data();
-                  if (data && data.list) {
+                  if (data && data.list && JSON.stringify(data.list) !== JSON.stringify(employeesRef.current)) {
                     setEmployees(data.list);
                     console.log('Employees atualizados em tempo real');
                   }
