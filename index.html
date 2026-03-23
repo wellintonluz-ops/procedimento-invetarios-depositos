@@ -68,6 +68,27 @@
         console.warn('Firebase init error (aplicação continua funcionando):', error.message);
       }
     }
+
+    // Função para salvar com retry automático
+    const saveToFirestoreWithRetry = async (collection, doc, data, maxRetries = 3) => {
+      initializeFirebase();
+      if (!db) return false;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await db.collection(collection).doc(doc).set(data);
+          console.log(`✅ ${collection}/${doc} salvo com sucesso`);
+          return true;
+        } catch (error) {
+          console.warn(`Tentativa ${attempt}/${maxRetries} falhou para ${collection}/${doc}:`, error.message);
+          if (attempt < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
+          }
+        }
+      }
+      console.error(`❌ Falha ao salvar ${collection}/${doc} após ${maxRetries} tentativas`);
+      return false;
+    };
     
     // Ícones embutidos diretamente para evitar erros de CDN externos (Lucide Icons SVG equivalentes)
     const Icon = ({ size = 24, className = '', children }) => (
@@ -122,18 +143,45 @@
       const [passwordInput, setPasswordInput] = useState('');
       const [loginError, setLoginError] = useState('');
       
-      // Tarefas e Motivos
-      const [tasks, setTasks] = useState(['Atualizar Tiny', 'Emitir NFD', 'Marketplaces', 'Análise de Faturas']);
+      // Tarefas e Motivos - carregar de localStorage ou usar defaults
+      const [tasks, setTasks] = useState(() => {
+        try {
+          const saved = localStorage.getItem('config_tasks');
+          if (saved) {
+            const data = JSON.parse(saved);
+            return data.list || ['Atualizar Tiny', 'Emitir NFD', 'Marketplaces', 'Análise de Faturas'];
+          }
+        } catch (e) {}
+        return ['Atualizar Tiny', 'Emitir NFD', 'Marketplaces', 'Análise de Faturas'];
+      });
       const [taskName, setTaskName] = useState('Atualizar Tiny');
       
-      const [motivos, setMotivos] = useState(['Pausa para Café', 'Almoço', 'Reunião Externa']);
+      const [motivos, setMotivos] = useState(() => {
+        try {
+          const saved = localStorage.getItem('config_motivos');
+          if (saved) {
+            const data = JSON.parse(saved);
+            return data.list || ['Pausa para Café', 'Almoço', 'Reunião Externa'];
+          }
+        } catch (e) {}
+        return ['Pausa para Café', 'Almoço', 'Reunião Externa'];
+      });
       const [novoMotivo, setNovoMotivo] = useState('');
       const [selectedMotivo, setSelectedMotivo] = useState(motivos[0]);
       
       const [novaTask, setNovaTask] = useState('');
       
       // Funcionários e Quantidade
-      const [employees, setEmployees] = useState(['Daniel']);
+      const [employees, setEmployees] = useState(() => {
+        try {
+          const saved = localStorage.getItem('config_employees');
+          if (saved) {
+            const data = JSON.parse(saved);
+            return data.list || ['Daniel'];
+          }
+        } catch (e) {}
+        return ['Daniel'];
+      });
       const [newEmployee, setNewEmployee] = useState('');
       const [taskQuantity, setTaskQuantity] = useState('');
       
@@ -170,6 +218,99 @@
       useEffect(() => { tasksRef.current = tasks; }, [tasks]);
       useEffect(() => { motivosRef.current = motivos; }, [motivos]);
       useEffect(() => { employeesRef.current = employees; }, [employees]);
+
+      // Carregar e sincronizar configurações do Firestore uma única vez ao montar
+      useEffect(() => {
+        let isMounted = true;
+        
+        const loadConfigFromFirestore = async () => {
+          try {
+            initializeFirebase();
+            let currentDb = db;
+            let waitCount = 0;
+            while (!currentDb && waitCount < 20) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              currentDb = db;
+              waitCount++;
+            }
+            
+            if (!currentDb) {
+              console.log('Firebase não disponível, usando dados do localStorage');
+              return;
+            }
+
+            // Carregar tasks
+            try {
+              const tasksDoc = await currentDb.collection('config').doc('tasks').get();
+              if (tasksDoc.exists && isMounted) {
+                const data = tasksDoc.data();
+                if (data && data.list && data.list.length > 0) {
+                  const localData = localStorage.getItem('config_tasks');
+                  const localTime = localData ? JSON.parse(localData).timestamp : 0;
+                  const firebaseTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+                  
+                  if (firebaseTime > localTime) {
+                    setTasks(data.list);
+                    console.log('✅ Tasks carregadas do Firestore (mais recente)');
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Erro ao carregar tasks:', e.message);
+            }
+
+            // Carregar motivos
+            try {
+              const motivosDoc = await currentDb.collection('config').doc('motivos').get();
+              if (motivosDoc.exists && isMounted) {
+                const data = motivosDoc.data();
+                if (data && data.list && data.list.length > 0) {
+                  const localData = localStorage.getItem('config_motivos');
+                  const localTime = localData ? JSON.parse(localData).timestamp : 0;
+                  const firebaseTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+                  
+                  if (firebaseTime > localTime) {
+                    setMotivos(data.list);
+                    console.log('✅ Motivos carregados do Firestore (mais recente)');
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Erro ao carregar motivos:', e.message);
+            }
+
+            // Carregar employees
+            try {
+              const employeesDoc = await currentDb.collection('config').doc('employees').get();
+              if (employeesDoc.exists && isMounted) {
+                const data = employeesDoc.data();
+                if (data && data.list && data.list.length > 0) {
+                  const localData = localStorage.getItem('config_employees');
+                  const localTime = localData ? JSON.parse(localData).timestamp : 0;
+                  const firebaseTime = data.updatedAt ? new Date(data.updatedAt).getTime() : 0;
+                  
+                  if (firebaseTime > localTime) {
+                    setEmployees(data.list);
+                    console.log('✅ Employees carregados do Firestore (mais recente)');
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('Erro ao carregar employees:', e.message);
+            }
+          } catch (error) {
+            console.warn('Erro geral ao carregar config:', error.message);
+          }
+        };
+
+        // Executar carregamento após a página carregar
+        const timer = setTimeout(loadConfigFromFirestore, 1000);
+        
+        return () => {
+          isMounted = false;
+          clearTimeout(timer);
+        };
+      }, []);
 
       // Carregar registros do Firestore ao iniciar a página
       useEffect(() => {
@@ -226,49 +367,6 @@
               } catch (e) {
                 console.warn('Erro ao ler localStorage de fallback:', e.message);
               }
-            }
-
-            // Carregar configurações (tasks, motivos, employees)
-            try {
-              const tasksDoc = await currentDb.collection('config').doc('tasks').get();
-              if (tasksDoc.exists && isMounted) {
-                const data = tasksDoc.data();
-                if (data && data.list) {
-                  setTasks(data.list);
-                  console.log('✅ Carregadas tasks do Firestore');
-                }
-              }
-            } catch (e) {
-              console.warn('Erro ao carregar tasks do Firestore:', e.message);
-            }
-
-            try {
-              const motivosDoc = await currentDb.collection('config').doc('motivos').get();
-              if (motivosDoc.exists && isMounted) {
-                const data = motivosDoc.data();
-                if (data && data.list) {
-                  setMotivos(data.list);
-                  console.log('✅ Carregados motivos do Firestore');
-                }
-              }
-            } catch (e) {
-              console.warn('Erro ao carregar motivos do Firestore:', e.message);
-            }
-
-            try {
-              console.log('Tentando carregar employees do Firestore');
-              const employeesDoc = await currentDb.collection('config').doc('employees').get();
-              console.log('employeesDoc.exists:', employeesDoc.exists);
-              if (employeesDoc.exists && isMounted) {
-                const data = employeesDoc.data();
-                console.log('data employees:', data);
-                if (data && data.list) {
-                  setEmployees(data.list);
-                  console.log('✅ Carregados employees do Firestore');
-                }
-              }
-            } catch (e) {
-              console.warn('Erro ao carregar employees do Firestore:', e.message);
             }
           } catch (error) {
             retryCount++;
@@ -642,22 +740,24 @@
             // Marca como sincronizando para evitar loop
             isSyncingRef.current = true;
             
-            // Salvar cada record individualmente para evitar sobrescrita entre usuários
+            // Salvar cada record individualmente com retry
             records.forEach((record) => {
-              db.collection('records').doc(String(record.id)).set({
-                ...record,
-                updatedAt: new Date().toISOString()
-              }).then(() => {
-                console.log(`Registro ${record.id} salvo no Firestore`);
-              }).catch((error) => console.error('Erro ao salvar registro:', record.id, error));
+              (async () => {
+                await saveToFirestoreWithRetry('records', String(record.id), {
+                  ...record,
+                  updatedAt: new Date().toISOString()
+                }, 2);
+              })();
             });
             
-            // Salvar também um índice com todos os IDs para referência rápida
-            db.collection('meta').doc('recordsIndex').set({
-              ids: records.map(r => r.id),
-              lastUpdated: new Date().toISOString(),
-              totalRecords: records.length
-            }).catch((error) => console.warn('Erro ao atualizar índice:', error.message));
+            // Salvar também um índice com todos os IDs
+            (async () => {
+              await saveToFirestoreWithRetry('meta', 'recordsIndex', {
+                ids: records.map(r => r.id),
+                lastUpdated: new Date().toISOString(),
+                totalRecords: records.length
+              }, 2);
+            })();
             
             // Aguard 1 segundo antes de permitir sincronização novamente
             setTimeout(() => {
@@ -675,56 +775,64 @@
         return () => clearTimeout(saveTimer);
       }, [records]);
 
-      // Salvar tasks no Firestore
+      // Salvar tasks com retry - SEMPRE em localStorage, e no Firestore com retry
       useEffect(() => {
-        initializeFirebase();
-        console.log('Salvando tasks, db:', db, 'firebaseInit:', firebaseInit);
-        if (db) {
-          console.log('Enviando set para tasks:', tasks);
-          db.collection('config').doc('tasks').set({
+        // Salvar em localStorage (backup local)
+        try {
+          localStorage.setItem('config_tasks', JSON.stringify({list: tasks, timestamp: Date.now()}));
+        } catch (e) {
+          console.warn('Erro ao salvar tasks localmente:', e);
+        }
+        
+        // Tentar salvar no Firestore com retry
+        (async () => {
+          await saveToFirestoreWithRetry('config', 'tasks', {
             list: tasks,
             updatedAt: new Date().toISOString()
-          }).then(() => {
-            console.log('Tasks salvas com sucesso');
-          }).catch((error) => console.warn('Erro ao salvar tasks:', error));
-        } else {
-          console.warn('db não definido para salvar tasks');
-        }
+          });
+        })();
       }, [tasks]);
 
-      // Salvar motivos no Firestore
+      // Salvar motivos com retry - SEMPRE em localStorage, e no Firestore com retry
       useEffect(() => {
-        initializeFirebase();
-        console.log('Salvando motivos, db:', db, 'firebaseInit:', firebaseInit);
-        if (db) {
-          console.log('Enviando set para motivos:', motivos);
-          db.collection('config').doc('motivos').set({
+        // Salvar em localStorage (backup local)
+        try {
+          localStorage.setItem('config_motivos', JSON.stringify({list: motivos, timestamp: Date.now()}));
+        } catch (e) {
+          console.warn('Erro ao salvar motivos localmente:', e);
+        }
+        
+        // Tentar salvar no Firestore com retry
+        (async () => {
+          await saveToFirestoreWithRetry('config', 'motivos', {
             list: motivos,
             updatedAt: new Date().toISOString()
-          }).then(() => {
-            console.log('Motivos salvos com sucesso');
-          }).catch((error) => console.warn('Erro ao salvar motivos:', error));
-        } else {
-          console.warn('db não definido para salvar motivos');
-        }
+          });
+        })();
       }, [motivos]);
 
-      // Salvar employees no Firestore
+      // Salvar employees com retry - SEMPRE em localStorage, e no Firestore com retry
       useEffect(() => {
         console.log('useEffect employees triggered, employees:', employees);
-        initializeFirebase();
-        console.log('Salvando employees, db:', db, 'firebaseInit:', firebaseInit);
-        if (db) {
-          console.log('Enviando set para employees:', employees);
-          db.collection('config').doc('employees').set({
+        
+        // Salvar em localStorage (backup local)
+        try {
+          localStorage.setItem('config_employees', JSON.stringify({list: employees, timestamp: Date.now()}));
+          console.log('Employees salvos localmente:', employees);
+        } catch (e) {
+          console.warn('Erro ao salvar employees localmente:', e);
+        }
+        
+        // Tentar salvar no Firestore com retry
+        (async () => {
+          const success = await saveToFirestoreWithRetry('config', 'employees', {
             list: employees,
             updatedAt: new Date().toISOString()
-          }).then(() => {
-            console.log('Employees salvos com sucesso');
-          }).catch((error) => console.warn('Erro ao salvar employees:', error));
-        } else {
-          console.warn('db não definido para salvar employees');
-        }
+          });
+          if (success) {
+            console.log('✅ Employees sincronizados com Firestore');
+          }
+        })();
       }, [employees]);
 
       // Sincronizar registros em tempo real com Firestore (listener) - Sempre ativo, com ou sem login
