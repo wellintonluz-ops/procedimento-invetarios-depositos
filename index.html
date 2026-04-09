@@ -146,6 +146,7 @@
       const [passwordInput, setPasswordInput] = useState('');
       const [loginError, setLoginError] = useState('');
       const isDanielRestricted = loggedInUser === 'daniel';
+      const canDeleteRecords = isLoggedIn && loggedInUser !== 'daniel';
       const workerFromLogin = loggedInUser ? loggedInUser.charAt(0).toUpperCase() + loggedInUser.slice(1) : '';
       const currentWorker = workerFromLogin || worker;
       
@@ -678,6 +679,11 @@
       const handleDeleteRecord = (recordId) => {
         if (!isLoggedIn) {
           alert('Apenas usuários com login podem excluir registros.');
+          return;
+        }
+
+        if (loggedInUser === 'daniel') {
+          alert('O perfil Daniel não tem permissão para excluir registros.');
           return;
         }
 
@@ -1822,13 +1828,15 @@
                               <td className="px-6 py-3 font-medium text-emerald-600">{calculateDurationStr(record.produtivoMs)}</td>
                               <td className="px-6 py-3 font-medium text-slate-700">{record.quantidadePorHora != null ? record.quantidadePorHora.toFixed(2) : '--'}</td>
                               <td className="px-6 py-3">
-                                {isLoggedIn ? (
+                                {canDeleteRecords ? (
                                   <button
                                     onClick={() => handleDeleteRecord(record.id)}
                                     className="text-sm text-red-600 hover:text-red-800 font-semibold"
                                   >
                                     Excluir
                                   </button>
+                                ) : isLoggedIn ? (
+                                  <span className="text-slate-400 text-xs">Sem permissão</span>
                                 ) : (
                                   <span className="text-slate-400 text-xs">Login necessário</span>
                                 )}
